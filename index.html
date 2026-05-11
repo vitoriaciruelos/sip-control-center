@@ -144,6 +144,19 @@
     border-radius: 50%;
     background: var(--green);
     flex-shrink: 0;
+    transition: background .3s;
+  }
+  .notion-dot.offline { background: var(--orange); }
+  .loading-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 2px; background: var(--blue);
+    z-index: 9998;
+    animation: loadingAnim 1s ease-in-out infinite;
+  }
+  @keyframes loadingAnim {
+    0% { opacity: 1; }
+    50% { opacity: .4; }
+    100% { opacity: 1; }
   }
 
   /* MAIN */
@@ -751,6 +764,80 @@ function App() {
   const [newDemand, setNewDemand] = useState({ title: "", desc: "", step: "step0", priority: "normal" });
   const [syncing, setSyncing] = useState(false);
   const [view, setView] = useState("dashboard");
+  const [notionReady, setNotionReady] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Carregar tasks do Notion ao autenticar
+  useEffect(() => {
+    if (authed) loadFromNotion();
+  }, [authed]);
+
+  const loadFromNotion = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/get-tasks');
+      const data = await res.json();
+      if (data.success && data.tasks.length > 0) {
+        setNotionReady(true);
+        // Merge tasks do Notion com estrutura local
+        setSteps(prev => prev.map(step => ({
+          ...step,
+          tasks: step.tasks.map(task => {
+            const notionTask = data.tasks.find(t => t.id === task.id);
+            return notionTask ? { ...task, done: notionTask.done, notionId: notionTask.notionId } : task;
+          })
+        })));
+        // Carregar atividade
+        const actRes = await fetch('/api/activity');
+        const actData = await actRes.json();
+        if (actData.success && actData.activities.length > 0) {
+          setActivity(actData.activities.map(a => ({ ...a, time: new Date(a.time) })));
+        }
+      } else if (data.success && data.tasks.length === 0) {
+        // Primeira vez — popular Notion com tasks iniciais
+        await initNotion();
+      }
+    } catch(e) {
+      console.log('Notion offline, usando dados locais');
+    }
+    setLoading(false);
+  };
+
+  const initNotion = async () => {
+    try {
+      for (const step of INITIAL_STEPS) {
+        for (const task of step.tasks) {
+          await fetch('/api/update-task', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create', task: { ...task, step: step.id } })
+          });
+        }
+      }
+      setNotionReady(true);
+      showToast('Notion sincronizado pela primeira vez!');
+    } catch(e) { console.log('Erro ao inicializar Notion'); }
+  };
+
+  const syncToNotion = async (task, action = 'update') => {
+    try {
+      await fetch('/api/update-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, task })
+      });
+    } catch(e) { console.log('Sync Notion falhou, salvo localmente'); }
+  };
+
+  const logActivity = async (text) => {
+    try {
+      await fetch('/api/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+    } catch(e) {}
+  };
 
   const totalTasks = steps.reduce((a, s) => a + s.tasks.length, 0);
   const doneTasks = steps.reduce((a, s) => a + s.tasks.filter(t => t.done).length, 0);
@@ -769,9 +856,12 @@ function App() {
       const tasks = s.tasks.map(t => {
         if (t.id !== taskId) return t;
         const done = !t.done;
+        const updated = { ...t, done };
         addActivity(`${done ? "✓" : "↩"} ${t.name.replace(" ✓", "")}`);
+        logActivity(`${done ? "✓" : "↩"} ${t.name.replace(" ✓", "")}`);
         showToast(done ? "Tarefa concluída" : "Tarefa reaberta");
-        return { ...t, done };
+        if (updated.notionId) syncToNotion(updated, 'update');
+        return updated;
       });
       const allDone = tasks.every(t => t.done);
       const anyDone = tasks.some(t => t.done);
@@ -815,7 +905,7 @@ function App() {
 
   const syncNotion = async () => {
     setSyncing(true);
-    await new Promise(r => setTimeout(r, 1500));
+    await loadFromNotion();
     setSyncing(false);
     addActivity("🔄 Sincronizado com Notion");
     showToast("Sincronizado com Notion");
@@ -886,8 +976,8 @@ function App() {
         </nav>
         <div className="sidebar-footer">
           <div className="notion-badge">
-            <div className="notion-dot"></div>
-            Notion conectado
+            <div className={`notion-dot ${notionReady ? '' : 'offline'}`}></div>
+            {notionReady ? 'Notion sincronizado' : 'Notion conectando...'}
           </div>
         </div>
       </div>
@@ -1158,6 +1248,7 @@ function App() {
         </Modal>
       )}
 
+      {loading && <div className="loading-bar"></div>}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
