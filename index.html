@@ -488,6 +488,106 @@
 
   .spinning { animation: spin 1s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* LOGIN */
+  .login-overlay {
+    position: fixed; inset: 0;
+    background: var(--gray-dark);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+
+  .login-box {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+
+  .login-logo-label {
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .login-logo-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .login-logo-sub {
+    font-size: 12px;
+    color: var(--gray-mid);
+    margin-bottom: 32px;
+  }
+
+  .login-label {
+    font-size: 12px;
+    color: var(--gray-mid);
+    text-align: left;
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: .03em;
+  }
+
+  .login-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: #fff;
+    outline: none;
+    transition: border-color .15s;
+    margin-bottom: 16px;
+    letter-spacing: .05em;
+  }
+
+  .login-input:focus { border-color: var(--blue); }
+  .login-input::placeholder { color: rgba(255,255,255,.2); }
+
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background .15s;
+    letter-spacing: .02em;
+  }
+
+  .login-btn:hover { background: var(--blue-dark); }
+
+  .login-error {
+    font-size: 12px;
+    color: #f87171;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  .login-footer {
+    font-size: 11px;
+    color: rgba(255,255,255,.2);
+    margin-top: 24px;
+  }
+
 </style>
 </head>
 <body>
@@ -632,6 +732,9 @@ function Modal({ title, sub, onClose, children }) {
 }
 
 function App() {
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem('sip_auth') === '1');
+  const [pwInput, setPwInput] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [steps, setSteps] = useState(INITIAL_STEPS);
   const [expanded, setExpanded] = useState({ step0: true });
   const [activity, setActivity] = useState([
@@ -721,6 +824,40 @@ function App() {
   const statusLabel = { done: "Concluído", active: "Em andamento", pending: "Pendente", blocked: "Bloqueado" };
   const statusBadge = { done: "badge-done", active: "badge-active", pending: "badge-pending", blocked: "badge-blocked" };
   const numClass = { done: "done", active: "active", pending: "pending", blocked: "blocked" };
+
+  const handleLogin = () => {
+    if (pwInput === 'SIP@smartly2026') {
+      sessionStorage.setItem('sip_auth', '1');
+      setAuthed(true);
+      setLoginError('');
+    } else {
+      setLoginError('Senha incorreta. Tente novamente.');
+      setPwInput('');
+    }
+  };
+
+  if (!authed) return (
+    <div className="login-overlay">
+      <div className="login-box">
+        <div className="login-logo-label">SmartLy</div>
+        <div className="login-logo-name">SIP Control</div>
+        <div className="login-logo-sub">Integration Program — Acesso restrito</div>
+        <label className="login-label">Senha de acesso</label>
+        <input
+          className="login-input"
+          type="password"
+          placeholder="••••••••••••••"
+          value={pwInput}
+          onChange={e => setPwInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleLogin()}
+          autoFocus
+        />
+        <button className="login-btn" onClick={handleLogin}>Entrar</button>
+        <div className="login-error">{loginError}</div>
+        <div className="login-footer">Vitória Ciruelos · SmartLy Brasil</div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="layout">
