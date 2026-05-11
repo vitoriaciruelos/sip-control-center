@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartLy SIP — Control Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #5bb1c8;
+    --blue-dark: #2d7f95;
+    --blue-light: #e8f6fa;
+    --blue-mid: #a8dcea;
+    --gray-dark: #585856;
+    --gray-mid: #b5b1b2;
+    --gray-light: #f5f5f4;
+    --gray-bg: #fafaf9;
+    --white: #ffffff;
+    --text: #1a1a18;
+    --text-2: #585856;
+    --text-3: #8a8a88;
+    --border: #e2e0de;
+    --green: #2d9e6b;
+    --green-light: #e6f7f0;
+    --orange: #e07b2a;
+    --orange-light: #fdf0e4;
+    --red: #d94f3d;
+    --red-light: #fdecea;
+    --purple: #7f5fc0;
+    --purple-light: #f0ebfa;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 24px rgba(0,0,0,.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px;
+    background: var(--gray-dark);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+
+  .logo-label {
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .logo-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -.01em;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--gray-mid);
+    margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    padding: 12px 8px 6px;
+    font-weight: 500;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all .15s;
+    font-size: 13.5px;
+    color: rgba(255,255,255,.6);
+    font-weight: 400;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.9); }
+  .nav-item.active { background: rgba(91,177,200,.15); color: var(--blue); font-weight: 500; }
+
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+
+  .notion-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--gray-mid);
+  }
+
+  .notion-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--gray-light); }
+  .btn-danger { background: var(--red-light); color: var(--red); border: none; }
+
+  /* CONTENT */
+  .content { padding: 32px; flex: 1; }
+
+  /* PROGRESS CARDS */
+  .progress-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .prog-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .prog-label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-3); font-weight: 500; margin-bottom: 8px; }
+  .prog-val { font-size: 28px; font-weight: 600; color: var(--text); line-height: 1; margin-bottom: 6px; }
+  .prog-sub { font-size: 12px; color: var(--text-3); }
+  .prog-bar { height: 4px; background: var(--gray-light); border-radius: 99px; margin-top: 12px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; background: var(--blue); transition: width .5s ease; }
+  .prog-fill.green { background: var(--green); }
+  .prog-fill.orange { background: var(--orange); }
+
+  /* STEPS */
+  .steps-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .section-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+
+  .steps-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+
+  .step-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: box-shadow .15s;
+  }
+
+  .step-card:hover { box-shadow: var(--shadow-md); }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    cursor: pointer;
+  }
+
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .step-num.done { background: var(--green-light); color: var(--green); }
+  .step-num.active { background: var(--blue-light); color: var(--blue-dark); }
+  .step-num.pending { background: var(--gray-light); color: var(--text-3); }
+  .step-num.blocked { background: var(--orange-light); color: var(--orange); }
+
+  .step-info { flex: 1; }
+  .step-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .step-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+  .step-meta { display: flex; align-items: center; gap: 10px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .badge-done { background: var(--green-light); color: var(--green); }
+  .badge-active { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-pending { background: var(--gray-light); color: var(--text-3); }
+  .badge-blocked { background: var(--orange-light); color: var(--orange); }
+
+  .step-progress { font-size: 12px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+
+  .step-chevron { color: var(--text-3); font-size: 12px; transition: transform .2s; }
+  .step-chevron.open { transform: rotate(180deg); }
+
+  .step-tasks {
+    border-top: 1px solid var(--border);
+    padding: 0 20px 16px;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-light);
+  }
+
+  .task-item:last-child { border-bottom: none; }
+
+  .task-check {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+    background: transparent;
+  }
+
+  .task-check.checked { background: var(--blue); border-color: var(--blue); }
+  .task-check.checked::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+
+  .task-body { flex: 1; }
+  .task-name { font-size: 13.5px; color: var(--text); line-height: 1.4; }
+  .task-name.done { text-decoration: line-through; color: var(--text-3); }
+  .task-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .task-tag { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--gray-light); color: var(--text-3); font-weight: 500; }
+  .task-tag.blue { background: var(--blue-light); color: var(--blue-dark); }
+  .task-tag.purple { background: var(--purple-light); color: var(--purple); }
+
+  .task-actions { display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
+  .task-item:hover .task-actions { opacity: 1; }
+
+  .icon-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-3); font-size: 14px; padding: 2px 4px;
+    border-radius: 4px; transition: all .15s;
+  }
+  .icon-btn:hover { background: var(--gray-light); color: var(--text); }
+
+  /* ADD TASK */
+  .add-task-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 0 0;
+  }
+
+  .task-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--gray-bg);
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .task-input:focus { border-color: var(--blue); background: var(--white); }
+  .task-input::placeholder { color: var(--text-3); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-md);
+  }
+
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .modal-sub { font-size: 13px; color: var(--text-3); margin-bottom: 20px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; display: block; }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--gray-bg);
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--blue);
+    background: var(--white);
+  }
+
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--gray-dark);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: var(--shadow-md);
+    animation: slideUp .2s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(12px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ACTIVITY */
+  .activity-list { display: flex; flex-direction: column; gap: 0; }
+
+  .activity-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-light);
+    font-size: 13px;
+  }
+
+  .activity-item:last-child { border-bottom: none; }
+
+  .activity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+
+  .activity-text { color: var(--text-2); line-height: 1.5; }
+  .activity-time { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+  @media (max-width: 900px) {
+    .sidebar { width: 200px; }
+    .main { margin-left: 200px; }
+    .progress-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .content { padding: 20px; }
+    .progress-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .empty { text-align: center; padding: 32px; color: var(--text-3); font-size: 13px; }
+
+  .notion-sync-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-3);
+    background: none; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 6px 12px;
+    cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
+  }
+  .notion-sync-btn:hover { background: var(--gray-light); color: var(--text); }
+
+  .spinning { animation: spin 1s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const NOTION_TOKEN = "NOTION_TOKEN_PLACEHOLDER";
+const NOTION_PAGE_ID = "35de2023ac438083b544e52a129e84a4";
+const NOTIFY_EMAIL = "vimciruelos@gmail.com";
+
+const INITIAL_STEPS = [
+  {
+    id: "step0",
+    num: "0",
+    name: "Head & Referências",
+    desc: "Nome, posicionamento, narrativa, âncoras de credibilidade, tom",
+    status: "active",
+    tasks: [
+      { id: "t0-1", name: "Nome do programa — SIP definido ✓", done: true, tag: "definido" },
+      { id: "t0-2", name: "Posicionamento em 3 versões (A, B, C) — aprovadas ✓", done: true, tag: "definido" },
+      { id: "t0-3", name: "Narrativa central em 3 versões (A, B, C) — aprovadas ✓", done: true, tag: "definido" },
+      { id: "t0-4", name: "Âncoras de credibilidade — 4 pilares confirmados ✓", done: true, tag: "definido" },
+      { id: "t0-5", name: "Tom do programa — seletivo, confiante ✓", done: true, tag: "definido" },
+      { id: "t0-6", name: "SIP Program ou Partners — a definir", done: false, tag: "pendente" },
+      { id: "t0-7", name: "Incorporar dados do Perplexity nas âncoras", done: false, tag: "pesquisa" },
+      { id: "t0-8", name: "Versões em inglês de todos os assets ✓", done: true, tag: "definido" },
+    ]
+  },
+  {
+    id: "step1",
+    num: "1",
+    name: "Portfólio",
+    desc: "Produtos que o integrador vende — SL201, SD211, SD221, ST401",
+    status: "pending",
+    tasks: [
+      { id: "t1-1", name: "Descrição comercial dos 4 dispositivos (PT + EN)", done: false, tag: "a fazer" },
+      { id: "t1-2", name: "Argumentário por produto para o integrador", done: false, tag: "a fazer" },
+      { id: "t1-3", name: "Diferenciais vs. concorrentes por produto", done: false, tag: "a fazer" },
+    ]
+  },
+  {
+    id: "step2",
+    num: "2",
+    name: "Processo Seletivo",
+    desc: "Critérios de avaliação, application, aprovação de integradores",
+    status: "pending",
+    tasks: [
+      { id: "t2-1", name: "Critérios de avaliação do integrador", done: false, tag: "a fazer" },
+      { id: "t2-2", name: "Formulário de application (PT + EN)", done: false, tag: "a fazer" },
+      { id: "t2-3", name: "Fluxo de aprovação — etapas e responsáveis", done: false, tag: "a fazer" },
+      { id: "t2-4", name: "Critérios de recusa e feedback ao candidato", done: false, tag: "a fazer" },
+    ]
+  },
+  {
+    id: "step3",
+    num: "3",
+    name: "Os 3 Tiers",
+    desc: "Associado, Certificado, Premier — requisitos e benefícios",
+    status: "pending",
+    tasks: [
+      { id: "t3-1", name: "Revisão dos requisitos por tier", done: false, tag: "a fazer" },
+      { id: "t3-2", name: "Revisão dos benefícios por tier", done: false, tag: "a fazer" },
+      { id: "t3-3", name: "Política de margens por tier (confidencial)", done: false, tag: "a fazer" },
+      { id: "t3-4", name: "Versão EN dos tiers", done: false, tag: "a fazer" },
+    ]
+  },
+  {
+    id: "step4",
+    num: "4",
+    name: "Metas do Programa",
+    desc: "Integradores por cidade/estado, volume de vendas, KPIs",
+    status: "pending",
+    tasks: [
+      { id: "t4-1", name: "Meta de integradores por cidade e estado", done: false, tag: "a fazer" },
+      { id: "t4-2", name: "Meta de vendas — 6 meses pós captação", done: false, tag: "a fazer" },
+      { id: "t4-3", name: "KPIs de performance do programa", done: false, tag: "a fazer" },
+      { id: "t4-4", name: "Dashboard de acompanhamento de metas", done: false, tag: "a fazer" },
+    ]
+  },
+  {
+    id: "step5",
+    num: "5",
+    name: "Jornada de Inscrição",
+    desc: "6 etapas do cadastro à progressão automática",
+    status: "pending",
+    tasks: [
+      { id: "t5-1", name: "Revisão das 6 etapas da jornada", done: false, tag: "a fazer" },
+      { id: "t5-2", name: "UX Writing do portal SmartLy Connect", done: false, tag: "a fazer" },
+      { id: "t5-3", name: "Fluxo de progressão automática de tier", done: false, tag: "a fazer" },
+    ]
+  },
+  {
+    id: "step6",
+    num: "6",
+    name: "Estratégia de Lançamento",
+    desc: "Como ativar o programa — fases, canais, primeiro público",
+    status: "pending",
+    tasks: [
+      { id: "t6-1", name: "Definir primeiro público-alvo de captação", done: false, tag: "a fazer" },
+      { id: "t6-2", name: "Estratégia de ativação — fases e canais", done: false, tag: "a fazer" },
+      { id: "t6-3", name: "Carta de apresentação ao integrador (PT + EN)", done: false, tag: "a fazer" },
+      { id: "t6-4", name: "Evento de lançamento — formato e convite", done: false, tag: "a fazer" },
+    ]
+  },
+  {
+    id: "step7",
+    num: "7",
+    name: "Kit de Materiais",
+    desc: "Catálogo, argumentário, comparativo, renders — tier Certificado",
+    status: "pending",
+    tasks: [
+      { id: "t7-1", name: "Catálogo digital dos 4 dispositivos (PT + EN)", done: false, tag: "a fazer" },
+      { id: "t7-2", name: "Argumentário para arquitetos e construtoras", done: false, tag: "a fazer" },
+      { id: "t7-3", name: "Comparativo SmartLy vs. concorrentes importados", done: false, tag: "a fazer" },
+      { id: "t7-4", name: "Prompts de imagem para renders dos dispositivos", done: false, tag: "a fazer" },
+    ]
+  },
+];
+
+const formatTime = (date) => {
+  const d = new Date(date);
+  return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+};
+
+function Toast({ message, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, []);
+  return <div className="toast">✓ {message}</div>;
+}
+
+function Modal({ title, sub, onClose, children }) {
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">{title}</div>
+        {sub && <div className="modal-sub">{sub}</div>}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [steps, setSteps] = useState(INITIAL_STEPS);
+  const [expanded, setExpanded] = useState({ step0: true });
+  const [activity, setActivity] = useState([
+    { id: 1, text: "Step 0 — Head & Referências iniciado", time: new Date(Date.now() - 3600000) },
+    { id: 2, text: "Tom do programa definido: seletivo, confiante", time: new Date(Date.now() - 2400000) },
+    { id: 3, text: "3 narrativas centrais aprovadas (A, B, C)", time: new Date(Date.now() - 1800000) },
+    { id: 4, text: "Prompt de pesquisa de mercado criado", time: new Date(Date.now() - 900000) },
+    { id: 5, text: "Control Center configurado com Notion", time: new Date() },
+  ]);
+  const [toast, setToast] = useState(null);
+  const [showAddTask, setShowAddTask] = useState(null);
+  const [newTaskText, setNewTaskText] = useState("");
+  const [showNewDemand, setShowNewDemand] = useState(false);
+  const [newDemand, setNewDemand] = useState({ title: "", desc: "", step: "step0", priority: "normal" });
+  const [syncing, setSyncing] = useState(false);
+  const [view, setView] = useState("dashboard");
+
+  const totalTasks = steps.reduce((a, s) => a + s.tasks.length, 0);
+  const doneTasks = steps.reduce((a, s) => a + s.tasks.filter(t => t.done).length, 0);
+  const activeSteps = steps.filter(s => s.status === "active").length;
+  const doneSteps = steps.filter(s => s.status === "done").length;
+
+  const addActivity = useCallback((text) => {
+    setActivity(prev => [{ id: Date.now(), text, time: new Date() }, ...prev].slice(0, 20));
+  }, []);
+
+  const showToast = useCallback((msg) => setToast(msg), []);
+
+  const toggleTask = (stepId, taskId) => {
+    setSteps(prev => prev.map(s => {
+      if (s.id !== stepId) return s;
+      const tasks = s.tasks.map(t => {
+        if (t.id !== taskId) return t;
+        const done = !t.done;
+        addActivity(`${done ? "✓" : "↩"} ${t.name.replace(" ✓", "")}`);
+        showToast(done ? "Tarefa concluída" : "Tarefa reaberta");
+        return { ...t, done };
+      });
+      const allDone = tasks.every(t => t.done);
+      const anyDone = tasks.some(t => t.done);
+      return {
+        ...s,
+        tasks,
+        status: allDone ? "done" : anyDone ? "active" : s.status
+      };
+    }));
+  };
+
+  const addTask = (stepId) => {
+    if (!newTaskText.trim()) return;
+    const task = { id: `t-${Date.now()}`, name: newTaskText.trim(), done: false, tag: "novo" };
+    setSteps(prev => prev.map(s => s.id === stepId ? { ...s, tasks: [...s.tasks, task] } : s));
+    addActivity(`+ Nova tarefa em ${steps.find(s => s.id === stepId)?.name}: ${newTaskText}`);
+    showToast("Tarefa adicionada");
+    setNewTaskText("");
+    setShowAddTask(null);
+  };
+
+  const deleteTask = (stepId, taskId) => {
+    setSteps(prev => prev.map(s => {
+      if (s.id !== stepId) return s;
+      const task = s.tasks.find(t => t.id === taskId);
+      addActivity(`🗑 Removida: ${task?.name}`);
+      return { ...s, tasks: s.tasks.filter(t => t.id !== taskId) };
+    }));
+    showToast("Tarefa removida");
+  };
+
+  const addDemand = () => {
+    if (!newDemand.title.trim()) return;
+    const task = { id: `t-${Date.now()}`, name: newDemand.title.trim(), done: false, tag: newDemand.priority === "alta" ? "urgente" : "novo" };
+    setSteps(prev => prev.map(s => s.id === newDemand.step ? { ...s, tasks: [...s.tasks, task] } : s));
+    addActivity(`📌 Nova demanda: ${newDemand.title}`);
+    showToast("Demanda adicionada");
+    setShowNewDemand(false);
+    setNewDemand({ title: "", desc: "", step: "step0", priority: "normal" });
+  };
+
+  const syncNotion = async () => {
+    setSyncing(true);
+    await new Promise(r => setTimeout(r, 1500));
+    setSyncing(false);
+    addActivity("🔄 Sincronizado com Notion");
+    showToast("Sincronizado com Notion");
+  };
+
+  const statusLabel = { done: "Concluído", active: "Em andamento", pending: "Pendente", blocked: "Bloqueado" };
+  const statusBadge = { done: "badge-done", active: "badge-active", pending: "badge-pending", blocked: "badge-blocked" };
+  const numClass = { done: "done", active: "active", pending: "pending", blocked: "blocked" };
+
+  return (
+    <div className="layout">
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="sidebar-logo">
+          <div className="logo-label">SmartLy</div>
+          <div className="logo-name">SIP Control</div>
+          <div className="logo-sub">Integration Program</div>
+        </div>
+        <nav className="sidebar-nav">
+          <div className="nav-section-label">Navegação</div>
+          <button className={`nav-item ${view === "dashboard" ? "active" : ""}`} onClick={() => setView("dashboard")}>
+            <span className="nav-icon">◎</span> Dashboard
+          </button>
+          <button className={`nav-item ${view === "steps" ? "active" : ""}`} onClick={() => setView("steps")}>
+            <span className="nav-icon">≡</span> Todas as etapas
+          </button>
+          <button className={`nav-item ${view === "activity" ? "active" : ""}`} onClick={() => setView("activity")}>
+            <span className="nav-icon">◷</span> Atividade
+          </button>
+          <div className="nav-section-label">Documentos</div>
+          <button className="nav-item" onClick={() => showToast("Abrindo Notion...")}>
+            <span className="nav-icon">↗</span> Notion
+          </button>
+        </nav>
+        <div className="sidebar-footer">
+          <div className="notion-badge">
+            <div className="notion-dot"></div>
+            Notion conectado
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        <div className="topbar">
+          <div className="topbar-title">
+            {view === "dashboard" && "Dashboard"}
+            {view === "steps" && "Todas as etapas"}
+            {view === "activity" && "Histórico de atividade"}
+          </div>
+          <div className="topbar-right">
+            <button className="notion-sync-btn" onClick={syncNotion}>
+              <span className={syncing ? "spinning" : ""}>⟳</span>
+              {syncing ? "Sincronizando..." : "Sync Notion"}
+            </button>
+            <button className="btn btn-primary" onClick={() => setShowNewDemand(true)}>
+              + Nova demanda
+            </button>
+          </div>
+        </div>
+
+        <div className="content">
+
+          {/* DASHBOARD VIEW */}
+          {view === "dashboard" && (
+            <>
+              <div className="progress-grid">
+                <div className="prog-card">
+                  <div className="prog-label">Progresso geral</div>
+                  <div className="prog-val">{Math.round((doneTasks / totalTasks) * 100)}%</div>
+                  <div className="prog-sub">{doneTasks} de {totalTasks} tarefas</div>
+                  <div className="prog-bar"><div className="prog-fill" style={{width: `${(doneTasks/totalTasks)*100}%`}}></div></div>
+                </div>
+                <div className="prog-card">
+                  <div className="prog-label">Etapas ativas</div>
+                  <div className="prog-val">{activeSteps}</div>
+                  <div className="prog-sub">{doneSteps} concluídas · {steps.length - activeSteps - doneSteps} pendentes</div>
+                  <div className="prog-bar"><div className="prog-fill green" style={{width: `${(doneSteps/steps.length)*100}%`}}></div></div>
+                </div>
+                <div className="prog-card">
+                  <div className="prog-label">Step atual</div>
+                  <div className="prog-val">Step 0</div>
+                  <div className="prog-sub">Head & Referências</div>
+                  <div className="prog-bar"><div className="prog-fill orange" style={{width: `${(steps[0].tasks.filter(t=>t.done).length / steps[0].tasks.length)*100}%`}}></div></div>
+                </div>
+                <div className="prog-card">
+                  <div className="prog-label">Próxima entrega</div>
+                  <div className="prog-val" style={{fontSize: 16, paddingTop: 4}}>Pesquisa</div>
+                  <div className="prog-sub">Aguardando dados Perplexity</div>
+                  <div className="prog-bar"><div className="prog-fill" style={{width: "30%", background: "var(--orange)"}}></div></div>
+                </div>
+              </div>
+
+              <div className="two-col">
+                <div>
+                  <div className="steps-header">
+                    <div>
+                      <div className="section-title">Etapas do projeto</div>
+                      <div className="section-sub">Clique em qualquer etapa para expandir as tarefas</div>
+                    </div>
+                  </div>
+                  <div className="steps-list">
+                    {steps.map(step => {
+                      const done = step.tasks.filter(t => t.done).length;
+                      const total = step.tasks.length;
+                      const isOpen = expanded[step.id];
+                      return (
+                        <div key={step.id} className="step-card">
+                          <div className="step-header" onClick={() => setExpanded(p => ({...p, [step.id]: !p[step.id]}))}>
+                            <div className={`step-num ${numClass[step.status]}`}>{step.num}</div>
+                            <div className="step-info">
+                              <div className="step-name">{step.name}</div>
+                              <div className="step-desc">{step.desc}</div>
+                            </div>
+                            <div className="step-meta">
+                              <span className={`badge ${statusBadge[step.status]}`}>{statusLabel[step.status]}</span>
+                              <span className="step-progress">{done}/{total}</span>
+                              <span className={`step-chevron ${isOpen ? "open" : ""}`}>▾</span>
+                            </div>
+                          </div>
+                          {isOpen && (
+                            <div className="step-tasks">
+                              {step.tasks.map(task => (
+                                <div key={task.id} className="task-item">
+                                  <div
+                                    className={`task-check ${task.done ? "checked" : ""}`}
+                                    onClick={() => toggleTask(step.id, task.id)}
+                                  ></div>
+                                  <div className="task-body">
+                                    <div className={`task-name ${task.done ? "done" : ""}`}>{task.name}</div>
+                                    <div className="task-meta">
+                                      <span className={`task-tag ${task.tag === "definido" ? "blue" : task.tag === "pesquisa" ? "purple" : ""}`}>{task.tag}</span>
+                                    </div>
+                                  </div>
+                                  <div className="task-actions">
+                                    <button className="icon-btn" onClick={() => deleteTask(step.id, task.id)} title="Remover">✕</button>
+                                  </div>
+                                </div>
+                              ))}
+                              {showAddTask === step.id ? (
+                                <div className="add-task-row">
+                                  <input
+                                    className="task-input"
+                                    placeholder="Nome da tarefa..."
+                                    value={newTaskText}
+                                    onChange={e => setNewTaskText(e.target.value)}
+                                    onKeyDown={e => e.key === "Enter" && addTask(step.id)}
+                                    autoFocus
+                                  />
+                                  <button className="btn btn-primary" onClick={() => addTask(step.id)}>Adicionar</button>
+                                  <button className="btn btn-ghost" onClick={() => setShowAddTask(null)}>Cancelar</button>
+                                </div>
+                              ) : (
+                                <button
+                                  className="btn btn-ghost"
+                                  style={{marginTop: 8, fontSize: 12}}
+                                  onClick={() => setShowAddTask(step.id)}
+                                >+ Adicionar tarefa</button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* SIDEBAR RIGHT */}
+                <div>
+                  <div className="card" style={{marginBottom: 16}}>
+                    <div className="card-title">Atividade recente</div>
+                    <div className="activity-list">
+                      {activity.slice(0, 8).map(a => (
+                        <div key={a.id} className="activity-item">
+                          <div className="activity-dot"></div>
+                          <div>
+                            <div className="activity-text">{a.text}</div>
+                            <div className="activity-time">{formatTime(a.time)}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="card-title">Notificações</div>
+                    <div style={{fontSize: 13, color: "var(--text-2)", lineHeight: 1.6}}>
+                      <div style={{display: "flex", alignItems: "center", gap: 8, marginBottom: 8}}>
+                        <span style={{fontSize: 15}}>✉</span>
+                        <span>{NOTIFY_EMAIL}</span>
+                      </div>
+                      <div style={{fontSize: 12, color: "var(--text-3)"}}>
+                        Notificações ativas para atualizações de tarefas e novas demandas.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* STEPS VIEW */}
+          {view === "steps" && (
+            <div className="steps-list">
+              {steps.map(step => {
+                const done = step.tasks.filter(t => t.done).length;
+                const total = step.tasks.length;
+                const isOpen = expanded[step.id];
+                return (
+                  <div key={step.id} className="step-card">
+                    <div className="step-header" onClick={() => setExpanded(p => ({...p, [step.id]: !p[step.id]}))}>
+                      <div className={`step-num ${numClass[step.status]}`}>{step.num}</div>
+                      <div className="step-info">
+                        <div className="step-name">{step.name}</div>
+                        <div className="step-desc">{step.desc}</div>
+                      </div>
+                      <div className="step-meta">
+                        <span className={`badge ${statusBadge[step.status]}`}>{statusLabel[step.status]}</span>
+                        <span className="step-progress">{done}/{total}</span>
+                        <span className={`step-chevron ${isOpen ? "open" : ""}`}>▾</span>
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div className="step-tasks">
+                        {step.tasks.map(task => (
+                          <div key={task.id} className="task-item">
+                            <div className={`task-check ${task.done ? "checked" : ""}`} onClick={() => toggleTask(step.id, task.id)}></div>
+                            <div className="task-body">
+                              <div className={`task-name ${task.done ? "done" : ""}`}>{task.name}</div>
+                              <div className="task-meta">
+                                <span className={`task-tag ${task.tag === "definido" ? "blue" : task.tag === "pesquisa" ? "purple" : ""}`}>{task.tag}</span>
+                              </div>
+                            </div>
+                            <div className="task-actions">
+                              <button className="icon-btn" onClick={() => deleteTask(step.id, task.id)}>✕</button>
+                            </div>
+                          </div>
+                        ))}
+                        {showAddTask === step.id ? (
+                          <div className="add-task-row">
+                            <input className="task-input" placeholder="Nome da tarefa..." value={newTaskText} onChange={e => setNewTaskText(e.target.value)} onKeyDown={e => e.key === "Enter" && addTask(step.id)} autoFocus />
+                            <button className="btn btn-primary" onClick={() => addTask(step.id)}>Adicionar</button>
+                            <button className="btn btn-ghost" onClick={() => setShowAddTask(null)}>Cancelar</button>
+                          </div>
+                        ) : (
+                          <button className="btn btn-ghost" style={{marginTop: 8, fontSize: 12}} onClick={() => setShowAddTask(step.id)}>+ Adicionar tarefa</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ACTIVITY VIEW */}
+          {view === "activity" && (
+            <div className="card">
+              <div className="card-title">Histórico completo</div>
+              <div className="activity-list">
+                {activity.map(a => (
+                  <div key={a.id} className="activity-item">
+                    <div className="activity-dot"></div>
+                    <div>
+                      <div className="activity-text">{a.text}</div>
+                      <div className="activity-time">{formatTime(a.time)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* MODAL NOVA DEMANDA */}
+      {showNewDemand && (
+        <Modal title="Nova demanda" sub="Adicione uma tarefa ou demanda ao projeto SIP" onClose={() => setShowNewDemand(false)}>
+          <div className="form-group">
+            <label className="form-label">Título da demanda *</label>
+            <input className="form-input" placeholder="Descreva a demanda..." value={newDemand.title} onChange={e => setNewDemand(p => ({...p, title: e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Etapa</label>
+            <select className="form-select" value={newDemand.step} onChange={e => setNewDemand(p => ({...p, step: e.target.value}))}>
+              {steps.map(s => <option key={s.id} value={s.id}>Step {s.num} — {s.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Prioridade</label>
+            <select className="form-select" value={newDemand.priority} onChange={e => setNewDemand(p => ({...p, priority: e.target.value}))}>
+              <option value="normal">Normal</option>
+              <option value="alta">Alta</option>
+              <option value="baixa">Baixa</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Descrição (opcional)</label>
+            <textarea className="form-textarea" placeholder="Contexto adicional..." value={newDemand.desc} onChange={e => setNewDemand(p => ({...p, desc: e.target.value}))} />
+          </div>
+          <div className="modal-actions">
+            <button className="btn btn-ghost" onClick={() => setShowNewDemand(false)}>Cancelar</button>
+            <button className="btn btn-primary" onClick={addDemand}>Adicionar demanda</button>
+          </div>
+        </Modal>
+      )}
+
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
